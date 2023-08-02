@@ -157,7 +157,6 @@ func (p *Producer) Inject(ctx context.Context, out chan interface{}) {
 		p.Notifier("InjectFinished")
 
 	}
-
 }
 
 // Close closes the Producer's buffer channel.
