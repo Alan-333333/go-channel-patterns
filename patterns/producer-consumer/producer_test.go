@@ -4,6 +4,8 @@ package producerconsumer
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"reflect"
 	"sync"
 	"sync/atomic"
@@ -227,4 +229,129 @@ func TestProducer_Close(t *testing.T) {
 		p.Buffer <- "data"
 		closed <- true
 	}()
+}
+
+func TestProducer_HandleError(t *testing.T) {
+
+	p := NewProducer(1, 1)
+
+	err := fmt.Errorf("mock error")
+	// 模拟数据生成函数返回错误
+	p.ProduceFunc = func() (interface{}, error) {
+		return nil, err
+	}
+
+	handledCount := 0
+	// Mock Notifier
+	p.Notifier = func(s string) {}
+
+	p.HandleError(func(error) {
+		handledCount++
+	})
+
+	p.handleError(err)
+
+	// 检查错误是否被处理函数接收到
+	if handledCount == 0 {
+		t.Error("Expected error to be handled")
+	}
+}
+
+func TestProducer_tryReadBuffer(t *testing.T) {
+
+	buffer := make(chan interface{}, 1)
+
+	p := &Producer{
+		Buffer: buffer,
+	}
+
+	// 当 buffer 为空时,tryReadBuffer 应该返回 false
+	_, ok := p.tryReadBuffer()
+	if ok {
+		t.Error("Should return false when buffer is empty")
+	}
+
+	// 当 buffer 写入数据后,tryReadBuffer 应该返回数据
+	buffer <- "data"
+	d, ok := p.tryReadBuffer()
+	if !ok || d != "data" {
+		t.Error("Should return data when buffer has data")
+	}
+}
+
+func TestProducer_isCancelled(t *testing.T) {
+
+	p := &Producer{}
+	// 未取消的 Context
+	ctx := context.Background()
+	if p.isCancelled(ctx) {
+		t.Error("Unpancelled context should return false")
+	}
+
+	// 已取消的 Context
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+
+	if !p.isCancelled(ctx) {
+		t.Error("Cancelled context should return true")
+	}
+}
+
+func TestProducer_applyBackpressure(t *testing.T) {
+
+	p := &Producer{}
+	// 模拟数据填满 buffer
+	p.Buffer = make(chan interface{}, 1)
+	p.Buffer <- "data"
+
+	// 定义通知函数,检测是否被调用
+	var notified bool
+	p.Notifier = func(string) {
+		notified = true
+	}
+
+	// 调用 applyBackpressure
+	p.applyBackpressure()
+
+	// 检查通知函数是否被调用
+	if !notified {
+		t.Error("Notifier should be called")
+	}
+
+	// 检查是否有睡眠
+	start := time.Now()
+	p.applyBackpressure()
+	if time.Since(start) < time.Millisecond*50 {
+		t.Error("Should sleep on backpressure")
+	}
+}
+
+func TestProducer_handleError(t *testing.T) {
+
+	p := &Producer{}
+
+	// 定义错误处理函数
+	handleCount := 0
+	p.ErrHandler = func(err error) {
+		handleCount++
+	}
+
+	// 定义通知函数
+	var notified bool
+	p.Notifier = func(string) {
+		notified = true
+	}
+
+	// 传入错误,调用 handleError
+	err := errors.New("test error")
+	p.handleError(err)
+
+	// 检查通知和错误处理是否被调用
+	if !notified {
+		t.Error("Notifier should be called")
+	}
+
+	if handleCount != 1 {
+		t.Error("ErrHandler should be called")
+	}
 }
