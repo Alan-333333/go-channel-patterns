@@ -5,7 +5,7 @@ import (
 	"time"
 )
 
-var bucket = New(100, 1000) // 全局漏桶
+var bucket = New(100, 1000) // 全局漏桶 1000(REQs/sec)
 
 func handleRequest(i int) {
 	if !bucket.Allow() {
