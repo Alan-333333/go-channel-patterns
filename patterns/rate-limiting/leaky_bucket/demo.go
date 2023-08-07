@@ -5,7 +5,7 @@ import (
 	"time"
 )
 
-var bucket = New(100, 1000) // 全局漏桶 1000(REQs/sec)
+var bucket = New(100, 1000) // Global leakage bucket 1000 (REQs/sec)
 
 func handleRequest(i int) {
 	if !bucket.Allow() {
@@ -14,20 +14,20 @@ func handleRequest(i int) {
 	}
 
 	fmt.Println("Handling request", i)
-	// 处理请求...
+	// Processing requests...
 }
 
 func main() {
 	for i := 1; i <= 20; i++ {
 		handleRequest(i)
-		time.Sleep(50 * time.Millisecond) // 增加间隔
+		time.Sleep(50 * time.Millisecond) // increase the interval
 	}
 
-	// 等待漏桶重新填充
+	// Waiting for the leaky bucket to refill
 	time.Sleep(1 * time.Second)
 
 	for i := 21; i <= 30; i++ {
 		handleRequest(i)
-		time.Sleep(10 * time.Millisecond) // 增加间隔
+		time.Sleep(10 * time.Millisecond) // increase the interval
 	}
 }
