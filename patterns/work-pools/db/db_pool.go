@@ -66,7 +66,9 @@ func (p *ConnectionPool) Open() error {
 		if err != nil {
 			return err
 		}
-
+		if conn.HeartBeat.IsZero() {
+			conn.HeartBeat = time.Now()
+		}
 		p.conns <- conn
 	}
 
