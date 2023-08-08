@@ -1,2 +1,27 @@
-# go-channel-patterns
-A collection of common algorithm questions for practicing Go channel usage and concurrency patterns.
+# Go Design Patterns
+
+本仓库实现了Go语言中的常见设计模式和组件。
+
+## 实现的设计模式和组件
+
+- **Producer-Consumer** - 实现了生产者-消费者模式,基于Goroutine和channel进行数据传输。
+
+- **Rate Limiting** - 实现了限流算法,包含计数器限流、令牌桶、漏桶等。
+
+- **Work Pools** - 实现了连接池,包含数据库连接池和Redis连接池。
+
+## 用法
+
+每个目录下包含了详细的README文档,介绍具体的实现方式、接口设计和示例代码。
+
+可以直接基于提供的接口进行使用。也可以修改和扩展已有实现。
+
+## 作者
+
+刘满江 @2023 
+
+## 许可证
+
+该项目使用 MIT 许可证,详情见 LICENSE 文件。
+
+-----------------
